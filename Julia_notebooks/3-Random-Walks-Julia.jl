@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.16.4
+# v0.17.1
 
 using Markdown
 using InteractiveUtils
@@ -319,9 +319,9 @@ num_returns_array_1D = let dim=1, num_trajs = 200
 end;
 
 # ╔═╡ cf0cdd18-650e-4a41-8937-4ab8f1ee1f00
-begin
+let a = 0.8
 	# plot theoretical result
-	plot(length_array, [sqrt.(length_array), num_returns_array_1D], label=["Theory" "Numerics"], legend=true)
+	plot(length_array, [a * sqrt.(length_array), num_returns_array_1D], label=["Theory" "Numerics"], legend=true)
 	# add axis labels
 	xaxis!("traj length", :log10)
 	yaxis!("# returns to origin", :log10)
@@ -339,8 +339,8 @@ end;
 
 # ╔═╡ 9e109fc1-a849-4622-b1d6-38461ee5847e
 # plot theoretical result
-let k = 0.3
-	plot(length_array, [k*log.(length_array), num_returns_array_2D], label=["Theory" "Numerics"], legend=true)
+let k = 0.3, h = 1
+	plot(length_array, [h .+ k * log.(length_array), num_returns_array_2D], label=["Theory" "Numerics"], legend=true)
 	# add axis labels
 	xaxis!("traj length", :log10)
 	yaxis!("# returns to origin")
@@ -350,21 +350,25 @@ end
 
 # ╔═╡ f43a2467-2101-4b6d-aa91-4030681dff07
 # do the simulations for d=3
-num_returns_array_3D = let dim = 3, num_trajs = 2_000
-	[
-		get_average_num_returns(length, dim, num_trajs)
-		for length in length_array
-	]
-end;
+(@timed begin
+	num_returns_array_3D = let dim = 3, num_trajs = 2_000
+		[
+			get_average_num_returns(length, dim, num_trajs)
+			for length in length_array
+		]
+	end;
+end).time
 
 # ╔═╡ 2966a511-92d3-4f3c-ae70-ac8d82a25e60
 # do the simulations for d=4
-num_returns_array_4D = let dim = 4, num_trajs = 2_000
-	[
-		get_average_num_returns(length, dim, num_trajs)
-		for length in length_array
-	]
-end;
+(@timed begin
+	num_returns_array_4D = let dim = 4, num_trajs = 2_000
+		[
+			get_average_num_returns(length, dim, num_trajs)
+			for length in length_array
+		]
+	end
+end).time
 
 # ╔═╡ 37cdef7f-a5dd-4a90-a534-a1526a3238f8
 begin
@@ -413,13 +417,18 @@ Write a function that counts the number of self-intersections of a RW. Notice th
 # ╔═╡ 22aab5b0-c7f1-4978-bba2-bf23942e0145
 function count_self_intersections(traj)
     """Count the number of self-intersections of a RW"""
-    num_self_intersections = 0
-    for (i, point) in enumerate(eachrow(traj))
-        if any(isequal(point), eachrow(traj[begin:i-1, :])) # point in preceding trajectory
-            num_self_intersections += 1
-		end
-	end
-    num_self_intersections
+	size(traj, 1) - size(unique(traj, dims=1), 1)
+end;
+
+# ╔═╡ 99700da2-44ae-475f-bfb2-5b04646fa31c
+md"""
+I also write a function to quickly check if there are any self-intersections
+"""
+
+# ╔═╡ 085b6630-7c4d-4248-9a30-9e4cff15d6b8
+function isSAW(traj)
+	"""Check if a RW has any self-intersections"""
+	allunique(eachrow(traj))
 end;
 
 # ╔═╡ 6f0df9ff-d0f2-46fc-99ba-fe9b1cada41d
@@ -550,19 +559,15 @@ Write a function `get_next_SAW` that, given a SAW, generates another SAW using t
 # ╔═╡ 569757aa-d6d3-41ae-b28f-8101cb2f4c78
 function get_next_SAW(traj)
     # make sure input traj is SAW
-    @assert count_self_intersections(traj) == 0
+    @assert isSAW(traj)
     
     # pivot step
     proposed_traj = pivot_traj(traj)
     
-    # count intersections
-    num_intersections = count_self_intersections(proposed_traj)
-    
     # if it's a SAW
-    if iszero(num_intersections)
-        return proposed_traj
-	end
-    return traj
+    isSAW(proposed_traj) ? 
+		proposed_traj : 
+		traj
 end;
 
 # ╔═╡ 2ee69605-63ef-46b3-99f2-57796c53d4c9
@@ -645,8 +650,8 @@ end;
 average_displacement_array = [get_average_displacement(length) for length in walk_length_array];
 
 # ╔═╡ 4d8a5f53-c3a3-4dd7-a583-b5ceec021f57
-begin
-	plot(walk_length_array, [walk_length_array .^(3//2), average_displacement_array], label=["Theory" "Numerics"], legend=true)
+let a = 0.75
+	plot(walk_length_array, [a * walk_length_array .^(3//2), average_displacement_array], label=["Theory" "Numerics"], legend=true)
 	xaxis!("N", :log10)
 	yaxis!("<X²>", :log10)
 	title!("Mean-squared Displacement vs. Walk Lenght")
@@ -1560,6 +1565,8 @@ version = "0.9.1+5"
 # ╠═ebc7426b-c6af-4d06-b539-8603a942ad11
 # ╟─0e8f6107-e195-41e6-9932-51d7a4621c6d
 # ╠═22aab5b0-c7f1-4978-bba2-bf23942e0145
+# ╟─99700da2-44ae-475f-bfb2-5b04646fa31c
+# ╠═085b6630-7c4d-4248-9a30-9e4cff15d6b8
 # ╟─6f0df9ff-d0f2-46fc-99ba-fe9b1cada41d
 # ╠═32f97af6-2f06-4d8f-8af3-0f906a8ec5e4
 # ╟─15d03596-d033-4bb5-96cc-51a316a4e314
