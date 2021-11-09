@@ -10,6 +10,7 @@ begin
 	using LinearAlgebra
 	using StaticArrays
 	using StatsBase
+	using Markdown
 end
 
 # ╔═╡ 8b2869aa-9315-4aac-a2a4-18c33be82cae
@@ -22,6 +23,25 @@ end;
 
 # ╔═╡ 16d76581-01d3-40ab-a72a-eb2543ba9859
 logrange(x1, x2, n) = (10^y for y in range(log10(x1), log10(x2), length=n));
+
+# ╔═╡ 1fa3fa02-50fb-40d1-b7fa-9ae52efa3d16
+macro timeit(expr)
+	prefixes = ("m", "μ", "n")
+    quote
+	    local t0 = time_ns()
+	    local val = $(esc(expr))
+	    local t1 = time_ns()
+	    local t = t1-t0
+	    local index = 3 - Int(floor(log10(t)) ÷ 3) 
+	    "Time elapsed = " * if index < 1
+	    	t = t/1e9
+	        string(round(t, sigdigits=3)) * " s" 
+	    else
+	        t = t * exp10(3 * (index-3))
+	        string(round(t, sigdigits=3)) * " " * $prefixes[index] * "s"
+		end |> Markdown.parse
+    end
+end;
 
 # ╔═╡ 5d3095fe-72d2-43ef-9a63-7f67518b85eb
 md"""
@@ -188,6 +208,35 @@ md"""
 Show numerically that, for $d=3$ and $d=4$, the expected number of returns to the origin is **constant**.
 """
 
+# ╔═╡ f43a2467-2101-4b6d-aa91-4030681dff07
+# do the simulations for d=3
+num_returns_array_3D = let dim = 3, num_trajs = 2_000
+	[
+		get_average_num_returns(length, dim, num_trajs)
+		for length in length_array
+	]
+end
+
+# ╔═╡ 2966a511-92d3-4f3c-ae70-ac8d82a25e60
+# do the simulations for d=4
+num_returns_array_4D = let dim = 4, num_trajs = 2_000
+	[
+		get_average_num_returns(length, dim, num_trajs)
+		for length in length_array
+	]
+end
+
+# ╔═╡ 37cdef7f-a5dd-4a90-a534-a1526a3238f8
+begin
+	# plot theoretical result
+	plot(length_array, [num_returns_array_3D, num_returns_array_4D], label=["Numeric 3D" "Numeric 4D"], legend=true)
+	# add axis labels
+	xaxis!("traj length", :log10)
+	yaxis!("# returns to origin")
+	# add a title (e.g. that says what dimension we used)
+	title!("Returns to origin vs. length - 3D an 4D walk")
+end
+
 # ╔═╡ ff71bdc7-1314-4cb5-b456-174d661b3634
 md"""
 # Self-Avoiding Walks
@@ -348,39 +397,6 @@ let k = 0.3, h = 1
 	title!("Returns to origin vs. length - 2D walk")
 end
 
-# ╔═╡ f43a2467-2101-4b6d-aa91-4030681dff07
-# do the simulations for d=3
-(@timed begin
-	num_returns_array_3D = let dim = 3, num_trajs = 2_000
-		[
-			get_average_num_returns(length, dim, num_trajs)
-			for length in length_array
-		]
-	end;
-end).time
-
-# ╔═╡ 2966a511-92d3-4f3c-ae70-ac8d82a25e60
-# do the simulations for d=4
-(@timed begin
-	num_returns_array_4D = let dim = 4, num_trajs = 2_000
-		[
-			get_average_num_returns(length, dim, num_trajs)
-			for length in length_array
-		]
-	end
-end).time
-
-# ╔═╡ 37cdef7f-a5dd-4a90-a534-a1526a3238f8
-begin
-	# plot theoretical result
-	plot(length_array, [num_returns_array_3D, num_returns_array_4D], label=["Numeric 3D" "Numeric 4D"], legend=true)
-	# add axis labels
-	xaxis!("traj length", :log10)
-	yaxis!("# returns to origin")
-	# add a title (e.g. that says what dimension we used)
-	title!("Returns to origin vs. length - 3D an 4D walk")
-end
-
 # ╔═╡ d1c3baba-f52f-465c-9414-e18bbda12769
 function rotation_matrix(direction, point=[0,0])
     """Return a 2D matrix that rotates 90°, 180° or 270°"""
@@ -518,31 +534,31 @@ CAUTION!!! Some of the generated RW may have configurations such that it is unli
 """
 
 # ╔═╡ 446263fa-c7cc-4e03-8f14-160e4e96fd09
-SAW05 = get_first_SAW(5);
+@timeit	SAW05 = get_first_SAW(5)
 
 # ╔═╡ 32df7409-575f-4dab-b307-9c044eaf40b8
 plot(SAW05[:, 1], SAW05[:,2], xlabel = "x", ylabel = "y", title = "SAW 05", legend=false)
 
 # ╔═╡ 903e3657-6939-4666-8f4e-600807973865
-SAW10 = get_first_SAW(10);
+@timeit	SAW10 = get_first_SAW(10)
 
 # ╔═╡ 70d4e564-8c57-4413-b1f4-8b38cd530c66
 plot(SAW10[:, 1], SAW10[:,2], xlabel = "x", ylabel = "y", title = "SAW 10", legend=false)
 
 # ╔═╡ a327a8ad-4d83-465d-89f3-1e5c15d29899
-SAW100 = get_first_SAW(100);
+@timeit	SAW100 = get_first_SAW(100)
 
 # ╔═╡ ceec461a-3608-4bd0-ae1f-082bcbdb1e93
 plot(SAW100[:, 1], SAW100[:,2], xlabel = "x", ylabel = "y", title = "SAW 100", legend=false)
 
 # ╔═╡ 2797e4d0-56e7-4292-bb44-5cc84d439ea4
-SAW500 = get_first_SAW(500);
+@timeit SAW500 = get_first_SAW(500)
 
 # ╔═╡ e3a425df-ccbc-4c85-ad43-5532fa1a47a0
 plot(SAW500[:, 1], SAW500[:,2], xlabel = "x", ylabel = "y", title = "SAW 500", legend=false)
 
 # ╔═╡ fd9cc739-6413-4360-a9c0-2f97fcfe401a
-SAW1_000 = get_first_SAW(1_000);
+@timeit SAW1_000 = get_first_SAW(1_000)
 
 # ╔═╡ 3de64238-6535-405c-b431-3dddd1e1abc2
 plot(SAW1_000[:, 1], SAW1_000[:,2], xlabel = "x", ylabel = "y", title = "SAW 1_000", legend=false)
@@ -666,6 +682,7 @@ As can be seen in the plot above, the theoretically predicted power law is consi
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
@@ -1523,6 +1540,7 @@ version = "0.9.1+5"
 # ╠═2848a983-6b48-4d81-b451-d3290f931426
 # ╠═8b2869aa-9315-4aac-a2a4-18c33be82cae
 # ╠═16d76581-01d3-40ab-a72a-eb2543ba9859
+# ╠═1fa3fa02-50fb-40d1-b7fa-9ae52efa3d16
 # ╟─5d3095fe-72d2-43ef-9a63-7f67518b85eb
 # ╟─e7f27328-b0ae-4c03-a6a2-b77f2c060f09
 # ╟─33dcd63e-a783-49eb-8e59-5c32f2d921b0
