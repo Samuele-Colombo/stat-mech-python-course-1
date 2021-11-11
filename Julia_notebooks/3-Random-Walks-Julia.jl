@@ -6,6 +6,7 @@ using InteractiveUtils
 
 # ╔═╡ 2848a983-6b48-4d81-b451-d3290f931426
 begin
+	using PlutoUI
 	using Plots
 	using LinearAlgebra
 	using StaticArrays
@@ -208,34 +209,15 @@ md"""
 Show numerically that, for $d=3$ and $d=4$, the expected number of returns to the origin is **constant**.
 """
 
-# ╔═╡ f43a2467-2101-4b6d-aa91-4030681dff07
-# do the simulations for d=3
-num_returns_array_3D = let dim = 3, num_trajs = 2_000
-	[
-		get_average_num_returns(length, dim, num_trajs)
-		for length in length_array
-	]
-end
+# ╔═╡ c3b63a33-72b2-493e-899e-024f6a3c706f
+md"""
+The two cells below will take approx. five minutes to execute both.
+"""
 
-# ╔═╡ 2966a511-92d3-4f3c-ae70-ac8d82a25e60
-# do the simulations for d=4
-num_returns_array_4D = let dim = 4, num_trajs = 2_000
-	[
-		get_average_num_returns(length, dim, num_trajs)
-		for length in length_array
-	]
-end
-
-# ╔═╡ 37cdef7f-a5dd-4a90-a534-a1526a3238f8
-begin
-	# plot theoretical result
-	plot(length_array, [num_returns_array_3D, num_returns_array_4D], label=["Numeric 3D" "Numeric 4D"], legend=true)
-	# add axis labels
-	xaxis!("traj length", :log10)
-	yaxis!("# returns to origin")
-	# add a title (e.g. that says what dimension we used)
-	title!("Returns to origin vs. length - 3D an 4D walk")
-end
+# ╔═╡ f8496495-28a3-463e-9336-8c71bf3557fa
+md"""
+We see that, after an initial growth, the number of returns to origin stabilizes around a certain value.
+"""
 
 # ╔═╡ ff71bdc7-1314-4cb5-b456-174d661b3634
 md"""
@@ -395,6 +377,35 @@ let k = 0.3, h = 1
 	yaxis!("# returns to origin")
 	# add a title (e.g. that says what dimension we used)
 	title!("Returns to origin vs. length - 2D walk")
+end
+
+# ╔═╡ f43a2467-2101-4b6d-aa91-4030681dff07
+# do the simulations for d=3
+num_returns_array_3D = let dim = 3, num_trajs = 20_000
+	[
+		get_average_num_returns(length, dim, num_trajs)
+		for length in length_array
+	]
+end;
+
+# ╔═╡ 2966a511-92d3-4f3c-ae70-ac8d82a25e60
+# do the simulations for d=4
+num_returns_array_4D = let dim = 4, num_trajs = 20_000
+	[
+		get_average_num_returns(length, dim, num_trajs)
+		for length in length_array
+	]
+end;
+
+# ╔═╡ 37cdef7f-a5dd-4a90-a534-a1526a3238f8
+begin
+	# plot theoretical result
+	plot(length_array, [num_returns_array_3D, num_returns_array_4D], label=["Numeric 3D" "Numeric 4D"], legend=:topleft)
+	# add axis labels
+	xaxis!("traj length", :log10)
+	yaxis!("# returns to origin")
+	# add a title (e.g. that says what dimension we used)
+	title!("Returns to origin vs. length - 3D and 4D walk")
 end
 
 # ╔═╡ d1c3baba-f52f-465c-9414-e18bbda12769
@@ -563,6 +574,12 @@ plot(SAW500[:, 1], SAW500[:,2], xlabel = "x", ylabel = "y", title = "SAW 500", l
 # ╔═╡ 3de64238-6535-405c-b431-3dddd1e1abc2
 plot(SAW1_000[:, 1], SAW1_000[:,2], xlabel = "x", ylabel = "y", title = "SAW 1_000", legend=false)
 
+# ╔═╡ 5b0c024d-e1f4-4573-9fe3-bee937eddb1f
+@timeit SAW5_000 = get_first_SAW(5_000)
+
+# ╔═╡ 7f972cc2-2f14-4aed-8f18-217982655c48
+plot(SAW5_000[:, 1], SAW5_000[:,2], xlabel = "x", ylabel = "y", title = "SAW 5_000", legend=false)
+
 # ╔═╡ f33bd10e-9594-4e1c-acab-91de76f21bbd
 md"""
 ### Exercise 3.14
@@ -684,11 +701,13 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
 Plots = "~1.23.5"
+PlutoUI = "~0.7.18"
 StaticArrays = "~1.2.13"
 StatsBase = "~0.33.12"
 """
@@ -696,6 +715,12 @@ StatsBase = "~0.33.12"
 # ╔═╡ 00000000-0000-0000-0000-000000000002
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
+
+[[AbstractPlutoDingetjes]]
+deps = ["Pkg"]
+git-tree-sha1 = "0ec322186e078db08ea3e7da5b8b2885c099b393"
+uuid = "6e696c72-6542-2067-7265-42206c756150"
+version = "1.1.0"
 
 [[Adapt]]
 deps = ["LinearAlgebra"]
@@ -914,6 +939,23 @@ deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll",
 git-tree-sha1 = "8a954fed8ac097d5be04921d595f741115c1b2ad"
 uuid = "2e76f6c2-a576-52d4-95c1-20adfe4de566"
 version = "2.8.1+0"
+
+[[Hyperscript]]
+deps = ["Test"]
+git-tree-sha1 = "8d511d5b81240fc8e6802386302675bdf47737b9"
+uuid = "47d2ed2b-36de-50cf-bf87-49c2cf4b8b91"
+version = "0.0.4"
+
+[[HypertextLiteral]]
+git-tree-sha1 = "2b078b5a615c6c0396c77810d92ee8c6f470d238"
+uuid = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
+version = "0.9.3"
+
+[[IOCapture]]
+deps = ["Logging", "Random"]
+git-tree-sha1 = "f7be53659ab06ddc986428d3a9dcc95f6fa6705a"
+uuid = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
+version = "0.2.2"
 
 [[IniFile]]
 deps = ["Test"]
@@ -1174,6 +1216,12 @@ deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers"
 git-tree-sha1 = "7dc03c2b145168f5854085a16d054429d612b637"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 version = "1.23.5"
+
+[[PlutoUI]]
+deps = ["AbstractPlutoDingetjes", "Base64", "Dates", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "UUIDs"]
+git-tree-sha1 = "57312c7ecad39566319ccf5aa717a20788eb8c1f"
+uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+version = "0.7.18"
 
 [[Preferences]]
 deps = ["TOML"]
@@ -1570,9 +1618,11 @@ version = "0.9.1+5"
 # ╠═9e109fc1-a849-4622-b1d6-38461ee5847e
 # ╟─1ece179a-ad15-4a19-8220-f58b6aee8a19
 # ╟─3c130766-a8bc-4b9e-83a5-72966dc38742
+# ╟─c3b63a33-72b2-493e-899e-024f6a3c706f
 # ╠═f43a2467-2101-4b6d-aa91-4030681dff07
 # ╠═2966a511-92d3-4f3c-ae70-ac8d82a25e60
 # ╠═37cdef7f-a5dd-4a90-a534-a1526a3238f8
+# ╟─f8496495-28a3-463e-9336-8c71bf3557fa
 # ╟─ff71bdc7-1314-4cb5-b456-174d661b3634
 # ╟─4ac079b8-5b9b-4c12-99f3-07410da681d5
 # ╟─1b1fccdb-d511-4401-ba2e-b8610429cec4
@@ -1604,6 +1654,8 @@ version = "0.9.1+5"
 # ╠═e3a425df-ccbc-4c85-ad43-5532fa1a47a0
 # ╠═fd9cc739-6413-4360-a9c0-2f97fcfe401a
 # ╠═3de64238-6535-405c-b431-3dddd1e1abc2
+# ╠═5b0c024d-e1f4-4573-9fe3-bee937eddb1f
+# ╠═7f972cc2-2f14-4aed-8f18-217982655c48
 # ╟─f33bd10e-9594-4e1c-acab-91de76f21bbd
 # ╠═569757aa-d6d3-41ae-b28f-8101cb2f4c78
 # ╟─2ee69605-63ef-46b3-99f2-57796c53d4c9
